@@ -1,5 +1,7 @@
 # Elea Chatbot
 
+![](img/mascot_small.png)
+
 Elea Chatbot adalah sebuah chatbot yang mendampingi pengidap setiap hari untuk membantu pengidap gangguan jiwa menjadi lebih baik.
 
 **Tambahkan Elea dengan menggunakan QR Code ini:**
