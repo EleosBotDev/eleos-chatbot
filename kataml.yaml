@@ -1,0 +1,966 @@
+id: e25d1678-2cfb-4b17-9500-596191a7b40e
+revision: e896b38e1be21836f5b51af725f47cd38c63361e
+name: EleaBots
+tag: latest
+desc: 'Bot Line'
+flows:
+    fallback:
+        active: true
+        volatile: false
+        fallback: true
+        intents:
+            fallbackIntent:
+                type: text
+                initial: false
+                fallback: true
+        states:
+            init:
+                transitions:
+                    init:
+                        fallback: true
+                action: gapaham
+                initial: true
+                end: true
+        actions:
+            gapaham:
+                type: text
+                options:
+                    text: 'Maafin Elea, Elea nggak paham miauw (=ㅇᆽㅇ=)'
+        methods: {}
+    CBTFlow:
+        active: true
+        volatile: true
+        fallback: false
+        intents:
+            cbtTxt:
+                type: text
+                initial: true
+                fallback: false
+                classifier:
+                    nlu: cbtTrigger
+                    match: cbt
+            cbtFeeling:
+                type: text
+                initial: false
+                fallback: false
+                classifier:
+                    nlu: cbtFeeling
+                    match: ""
+                attributes:
+                    feelings:
+                        nlu: cbtFeeling
+                        path: ""
+            ya:
+                type: text
+                initial: false
+                fallback: false
+                classifier:
+                    nlu: yaTidak
+                    match: ya
+            tidak:
+                type: text
+                initial: false
+                fallback: false
+                classifier:
+                    nlu: yaTidak
+                    match: tidak
+            rating:
+                type: text
+                initial: false
+                fallback: false
+                classifier:
+                    nlu: rating
+                attributes:
+                    rating:
+                        nlu: rating
+            ada:
+                type: text
+                initial: false
+                fallback: false
+                classifier:
+                    nlu: yaTidak
+                    match: ada
+            tidakAda:
+                type: text
+                initial: false
+                fallback: false
+                classifier:
+                    nlu: yaTidak
+                    match: tidakAda
+            cbtTanyaPersen:
+                type: text
+                initial: false
+                fallback: false
+                classifier:
+                    nlu: cbtPersen
+            cbtHindar:
+                type: text
+                initial: false
+                fallback: false
+                classifier:
+                    nlu: cbtHindar
+                    match: takut
+            cbtBagian:
+                type: text
+                initial: false
+                fallback: false
+                classifier:
+                    nlu: cbtBagian
+                    match: pikiran
+            reenter:
+                type: command
+                initial: false
+                fallback: false
+                condition: 'content=="reenter"'
+            cbtTahu:
+                type: text
+                initial: false
+                fallback: false
+                classifier:
+                    nlu: yaTidak
+                    match: tahu
+            cbtTidakTahu:
+                type: text
+                initial: false
+                fallback: false
+                classifier:
+                    nlu: yaTidak
+                    match: tidakTahu
+            curhat:
+                type: text
+                initial: false
+                fallback: false
+                classifier:
+                    nlu: curhat
+            bebas:
+                type: text
+                initial: false
+                fallback: false
+                condition:
+                    - 'context.$state == "cbtEnd"'
+                    - 'context.$state == "cbtPertanyaan"'
+                    - 'context.$state == "cbtHindar"'
+                    - 'context.$state == "cbtJelaskan"'
+                    - 'context.$state == "cbtCerita"'
+                    - 'context.$state == "cbtPerilaku"'
+                    - 'context.$state == "cbtPerasaanLain"'
+                    - 'context.$state == "cbtPenjelasanPersen"'
+                    - 'context.$state == "jelaskanSolusi"'
+        states:
+            cbtStart:
+                transitions:
+                    cbtCerita:
+                        condition: 'intent=="cbtTxt"'
+                initial: true
+            cbtCerita:
+                transitions:
+                    panikState:
+                        mapping:
+                            context.perasaan: attributes.feelings
+                    cbtCerita:
+                        fallback: false
+                        condition: 'intent=="reenter"'
+                action: ceritaDong
+                float:
+                    condition: 'intent=="cbtTxt"'
+            panikState:
+                transitions:
+                    cbtPerasaan:
+                        mapping:
+                            context.rating: attributes.rating
+                action: panikState
+                end: false
+            cbtPerasaan:
+                transitions:
+                    cbtPerasaanLain:
+                        condition: 'intent=="ada" || intent=="ya"'
+                    cbtHitungTenang:
+                        condition: 'intent=="tidak"'
+                action:
+                    -
+                        name: simpatiHard
+                    -
+                        name: cbtPerasaan
+                    -
+                        name: jawab
+            cbtPerasaanLain:
+                transitions:
+                    cbtPerilaku: {}
+                action: cbtPerasaanLain
+            cbtPerilaku:
+                transitions:
+                    cbtHitungTenang: {}
+                action: cbtPerilaku
+            cbtHitungTenang:
+                transitions:
+                    cbtPertanyaan:
+                        condition: 'intent=="ya"'
+                action:
+                    -
+                        name: cbtHitungTenang
+                    -
+                        name: cbtTenangLainnya
+                    -
+                        name: cbtNafasHitung
+                    -
+                        name: cbtConfirm
+                    -
+                        name: jawabYa
+                end: false
+            cbtPertanyaan:
+                transitions:
+                    cbtHindar: {}
+                action:
+                    -
+                        name: cbtTanya
+                    -
+                        name: tanyaSituasi
+            cbtHindar:
+                transitions:
+                    cbtJelaskan: {}
+                action:
+                    -
+                        name: cbtHindar
+                    -
+                        name: efekMenghindar
+            cbtJelaskan:
+                transitions:
+                    cbtTanyaPersen: {}
+                action: cbtJelaskan
+            cbtTanyaPersen:
+                transitions:
+                    cbtPenjelasanPersen: {}
+                action: cbtTanyaPersen
+            cbtPenjelasanPersen:
+                transitions:
+                    cbtMembantu: {}
+                action: cbtPenjelasanPersen
+            cbtMembantu:
+                transitions:
+                    jelaskanSolusi:
+                        condition: 'intent=="ada" || intent=="ya"'
+                    noSolution:
+                        condition: 'intent=="tidak"'
+                action:
+                    -
+                        name: cbtMembantu
+                    -
+                        name: saran
+            jelaskanSolusi:
+                transitions:
+                    cbtEnd: {}
+                action: jelaskanSolusi
+                end: false
+            noSolution:
+                transitions: {}
+                action:
+                    -
+                        name: noSolution
+                    -
+                        name: eleaHere
+                    -
+                        name: emotSmile
+                end: true
+            cbtEnd:
+                transitions: {}
+                action:
+                    -
+                        name: cbtEnd
+                    -
+                        name: goodLuck
+                    -
+                        name: eleaHere
+                    -
+                        name: emotSmile
+                end: true
+        actions:
+            ceritaDong:
+                type: text
+                options:
+                    text: 'Okay.. Ceritakan dong, apa yang sekarang sedang kamu rasakan (misalnya, merasa sedih, gemetaran, dll)'
+            akhirCbt:
+                type: text
+                options:
+                    text: 'Senang bisa membantu :)'
+            secondState:
+                type: text
+                options:
+                    text: WOW!!!
+            tiga:
+                type: text
+                options:
+                    text: tiga
+            panikState:
+                type: text
+                options:
+                    text: 'Seberapa panik kamu sekarang? (1-10)'
+            endState:
+                type: text
+                options:
+                    text: 'I want you die dude!!'
+            cbtPerasaan:
+                type: text
+                options:
+                    text: 'Apakah ada pikiran lain yang muncul setelah yang kamu rasakan terjadi? $(context.rating)'
+            endStates:
+                type: text
+                options:
+                    text: 'I think you can Die DUDE!!'
+            pikiranLain:
+                type: text
+                options:
+                    text: 'Apakah ada pikiran lain yang muncul setelah kamu merasa'
+            cbtPerasaanLain:
+                type: text
+                options:
+                    text: 'Apa itu?'
+            cbtPerilaku:
+                type: text
+                options:
+                    text: 'Bagaimana pikiran tersebut memperngaruhi tindakanmu selanjutnya?'
+            cbtHitungTenang:
+                type: text
+                options:
+                    text: 'Wah... Aku ikut sedih mendengarnya. Elea selalu di sini buat kamu.'
+            cbtTenangLainnya:
+                type: text
+                options:
+                    text: 'Kalau bisa, tenangkan dirimu sebisa kamu ya..'
+            cbtNafasHitung:
+                type: text
+                options:
+                    text: 'Jangan lupa, Tarik nafas kamu dalam-dalam ya, sambil menghitung 1-10'
+            cbtConfirm:
+                type: text
+                options:
+                    text: 'Apakah kamu sudah lebih tenang untuk ngobrol lebih lanjut lagi? Atau kamu masih butuh waktu?'
+            cbtTanya:
+                type: text
+                options:
+                    text: 'Nah, aku ada pertanyaan mengenai hal yang sudah kamu ceritakan tadi.'
+            cbtHindar:
+                type: text
+                options:
+                    text: 'Menurut kamu, apasih dampaknya buat hidup kamu jika kamu menghindari situasi itu terus-terusan?'
+            cbtJelaskan:
+                type: text
+                options:
+                    text: 'Coba jelasin dong, efek dari situasi yang kamu hindari atau takuti tadi.'
+            cbtTanyaPersen:
+                type: text
+                options:
+                    text: 'Menurut kamu, berapa persen sih, kemungkinan efek situasi tersebut terjadi? (1-100)'
+            simpatiLight:
+                type: text
+                options:
+                    text: Okay..
+            simpatiMedium:
+                type: text
+                options:
+                    text: 'Okay.. Coba tenangkan dirimu terlebih dahulu..'
+            simpatiHard:
+                type: text
+                options:
+                    text: 'It''s Okay.. Coba tenangkan dirimu, ambil nafas dalam-dalam, keluarkan. Jika ada air coba minum air dulu. It''s okay..'
+            cbtPenjelasanPersen:
+                type: text
+                options:
+                    text: 'Wah, begitu ya... Mengapa menurutmu hal itu mungkin terjadi?'
+            cbtMembantu:
+                type: text
+                options:
+                    text:
+                        - '*puk-puk* Nggak apa-apa kok kalau kamu merasa seperti itu. Semua perasaan yang kamu rasakan itu valid♥︎'
+                        - 'Aku akan selalu di sini untuk membantumu melalui semua ini!'
+            efekMenghindar:
+                type: text
+                options:
+                    text: 'Mungkin itu akan berdampak ke kesehatan kamu, atau hubungan kamu dengan orang-orang, atau performa karir, atau mungkin yang lain?'
+            jawab:
+                type: text
+                options:
+                    text: 'Jika ada ketik ''Ada'', jika tidak ''Tidak ada''.'
+            tanyaSituasi:
+                type: text
+                options:
+                    text: 'Menurut kamu, situasi apa sih yang kamu hindari atau takuti tadi?'
+            saran:
+                type: text
+                options:
+                    text: 'Tapi alangkah baiknya kalo kamu punya ide untuk solusi mengatasi situasi ini. Kira-kira ada nggak? Nggak pun gapapa kok, perlahan pasti ada inspirasi jadi santai aja :)'
+            jelaskanSolusi:
+                type: text
+                options:
+                    text: 'Keren! Coba sih jelasin idemu ke Elea :)'
+            noSolution:
+                type: text
+                options:
+                    text: 'Oh gitu.. Ngga papa kok. Aku harap kamu menemukan jalan keluarnya nanti, terus berusaha ya :)'
+            eleaHere:
+                type: text
+                options:
+                    text: 'Elea akan selalu di sini menemani kamu sampai kapanpun. I love you.'
+            emotSmile:
+                type: text
+                options:
+                    text: '(=^ ◡ ^=)'
+            cbtEnd:
+                type: text
+                options:
+                    text: 'Hmm oke. Menurutku idemu patut untuk dicoba. Jika nanti belum berhasilpun nggak apa, paling tidak kamu mendapatkan sesuatu dan belajar hal baru dari situ.'
+            goodLuck:
+                type: text
+                options:
+                    text: 'Good luck ya! Kamu hebat bisa di titik ini, terus berjuang :)'
+            jawabYa:
+                type: text
+                options:
+                    text: '(Jawab ''ya'' untuk lanjut ngobrol atau tuliskan berapa waktu dalam menit yang dibutuhkan untuk menenangkan diri, misalnya ''10'' untuk 10 menit.)'
+        methods: {}
+    thanksFlow:
+        active: true
+        volatile: true
+        intents:
+            thanksIntent:
+                type: text
+                initial: true
+                fallback: false
+                classifier:
+                    nlu: thanks
+        states:
+            init:
+                transitions:
+                    samaSamaState: {}
+                initial: true
+            samaSamaState:
+                transitions: {}
+                action:
+                    -
+                        name: sama_sama
+                    -
+                        name: harapanBot
+                end: true
+        actions:
+            sama_sama:
+                type: text
+                options:
+                    text:
+                        - 'Iya, sama-sama :)'
+                        - 'Siiipp :)'
+                        - 'Ashiap :D'
+            harapanBot:
+                type: text
+                options:
+                    text:
+                        - 'Semoga aku bisa membantu walaupun tidak banyak :)'
+                        - 'Semoga kedepannya menjadi lebih baik :)'
+                        - 'Aku selalu ada di sini buat kamu :)'
+        methods: {}
+    guideFlow:
+        active: true
+        volatile: true
+        intents:
+            guideIntent:
+                type: text
+                initial: true
+                fallback: false
+                classifier:
+                    nlu: guide
+        states:
+            init:
+                transitions:
+                    guideState: {}
+                initial: true
+            guideState:
+                transitions: {}
+                action:
+                    -
+                        name: panduan
+                    -
+                        name: panduanSapa
+                    -
+                        name: detPanduan1
+                    -
+                        name: detPanduan2
+                    -
+                        name: eleaSiap
+                end: true
+        actions:
+            panduan:
+                type: text
+                options:
+                    text: 'Hi! Berikut panduan penggunaan EleaBot:'
+            detPanduan1:
+                type: text
+                options:
+                    text: 'Ketik ''cbt'' jika ingin bercerita dengan Elea dan mengaktifkan mode CBT.'
+            detPanduan2:
+                type: text
+                options:
+                    text: 'Ketik ''guide'' atau ''-h'' atau ''-help'' jika ingin memngetahui panduan lengkap penggunaan EleaBot.'
+            panduanSapa:
+                type: text
+                options:
+                    text: 'Kamu bisa menyapa Elea dengan mengetik keyword sapaan seperti ''hei'' atau ''hai'''
+            eleaSiap:
+                type: text
+                options:
+                    text: 'Elea akan selalu siap merespon dan memberikan tawaran pertolongan jika pengguna dinilai mengalami perasaan yang negatif (sedih, cemas, dan lain-lain).'
+        methods: {}
+    nyapaFlow:
+        active: true
+        volatile: true
+        intents:
+            nyapaIntent:
+                type: text
+                initial: true
+                fallback: false
+                classifier:
+                    nlu: sapaan
+            perasaanJelekIntent:
+                type: text
+                initial: false
+                fallback: false
+                classifier:
+                    nlu: feelingsState
+                    match: negative
+            perasaanBaikIntent:
+                type: text
+                initial: false
+                fallback: false
+                classifier:
+                    nlu: feelingsState
+                    match: positive
+            reenter:
+                type: command
+                initial: false
+                fallback: false
+                condition: 'content="reenter"'
+            okay:
+                type: text
+                initial: false
+                fallback: false
+                classifier:
+                    nlu: affirmation
+        states:
+            init:
+                transitions:
+                    sapaState: {}
+                initial: true
+                end: false
+            sapaState:
+                transitions:
+                    responKabarState:
+                        fallback: true
+                        condition: 'intent=="perasaanBaik"'
+                        priority: 1
+                    sapaState:
+                        fallback: false
+                        condition: 'intent="reenter"'
+                action:
+                    -
+                        name: helo
+                        condition: 'intent=="nyapaIntent"'
+                    -
+                        name: tanyaKabar
+                float:
+                    condition: 'intent =="nyapaIntent"'
+                initial: false
+                end: false
+            responKabarState:
+                transitions: {}
+                action:
+                    -
+                        name: responNegatif
+                        condition: 'intent == "perasaanJelekIntent"'
+                    -
+                        name: responPositif
+                        condition: 'intent ="perasaanBaikIntent"'
+                    -
+                        name: responNegatif2
+                        condition: 'intent == "perasaanJelekIntent"'
+                end: true
+            okayState:
+                transitions: {}
+                action:
+                    name: okay
+                    condition: 'intent="okay"'
+                end: true
+        actions:
+            balasSapa:
+                type: text
+                options:
+                    text:
+                        - 'Heiii, apa kabar?'
+                        - 'Halo, gimana kabarmu? ^_^'
+                        - 'Hewlo, kamu baik-baik saja? UwU'
+            responNegatif:
+                type: text
+                options:
+                    text:
+                        - 'Maaf, ada yang bisa kubantu? Kamu bersedia ngobrol sama aku tentang itu? :('
+                        - 'Boleh cerita sama aku?'
+            responPositif:
+                type: text
+                options:
+                    text:
+                        - 'Baguslah, aku senang dengernya :)'
+                        - 'YEEEEEEYY!! Aku ikut seneng, selamat yaa '
+                        - 'Puji syukur.. Selamat yaa, aku bangga sama kamu :)'
+            responNegatif2:
+                type: text
+                options:
+                    text: 'Ketik ''cbt'' jika iya.'
+            gaPaham:
+                type: text
+                options:
+                    text: 'Kita ga paham'
+            maaf:
+                type: text
+                options:
+                    text: 'Maaf Elea tidak paham :('
+            helo:
+                type: text
+                options:
+                    text:
+                        - Haiiii
+                        - 'Hewoo UwU'
+                        - 'Halooo ฅ/ᐠ｡ᆽ｡ᐟ \ฅ '
+            tanyaKabar:
+                type: text
+                options:
+                    text:
+                        - 'Apa kabar?'
+                        - 'Gimana kabarnya?'
+                        - 'Kamu baik-baik saja?'
+            okay:
+                type: text
+                options:
+                    text:
+                        - '/ᐠ｡▿｡ᐟ\ '
+                        - '✧/ᐠ-ꞈ-ᐟ\ '
+                        - ' /ᐠ. ᴗ.ᐟ\ '
+        methods: {}
+    tanggapDaruratFlow:
+        active: true
+        volatile: true
+        intents:
+            daruratIntent:
+                type: text
+                initial: true
+                fallback: false
+                classifier:
+                    nlu: feelingsState
+                    match: negative
+        states:
+            init:
+                transitions:
+                    responseState: {}
+                initial: true
+            responseState:
+                transitions: {}
+                action:
+                    -
+                        name: respon
+                    -
+                        name: cbt
+                end: true
+        actions:
+            respon:
+                type: text
+                options:
+                    text:
+                        - 'Kamu ngga papa?? Cerita sama aku boleh?'
+                        - 'Heii, kamu kenapa? :('
+            cbt:
+                type: text
+                options:
+                    text: 'Ketik ''cbt'' untuk bercerita dengan Elea.'
+        methods: {}
+    cancelFlow:
+        active: true
+        volatile: false
+        intents:
+            cancelIntent:
+                type: text
+                initial: true
+                fallback: false
+                classifier:
+                    nlu: cancel
+        states:
+            cancelState:
+                transitions: {}
+                action: cancel
+                initial: false
+                end: true
+            init:
+                transitions:
+                    cancelState: {}
+                initial: true
+        actions:
+            cancel:
+                type: text
+                options:
+                    text: 'Percakapan dibatalkan'
+        methods: {}
+nlus:
+    cbtTrigger:
+        type: keyword
+        options:
+            keywords:
+                cbt:
+                    - cbt
+    cbtFeeling:
+        type: keyword
+        options:
+            keywords:
+                perasaan:
+                    - sedih
+                    - cemas
+                    - galau
+                    - murung
+                    - kesal
+                gejalaFisik:
+                    - gemetar
+                    - keringatan
+                tingkahLaku:
+                    - bingung
+    yaTidak:
+        type: keyword
+        options:
+            keywords:
+                ya:
+                    - ya
+                    - iya
+                    - yes
+                    - allright
+                    - ok
+                    - oke
+                    - okay
+                    - y
+                tidak:
+                    - tidak
+                    - enggak
+                    - no
+                    - nggak
+                    - ga
+                    - g
+                    - gak
+                    - nope
+                    - gk
+                ada:
+                    - ada
+                    - ad
+                tidakAda:
+                    - 'tidak ada'
+                    - 'gak ada'
+                    - 'gk ada'
+                    - 'gk ad'
+                tahu:
+                    - tahu
+                    - tau
+                tidakTahu:
+                    - 'gak tau'
+                    - 'gak tahu'
+                    - 'tidak tahu'
+                    - 'tidak tau'
+                    - bingung
+    rating:
+        type: regex
+        options:
+            regex: '[1-9]'
+    cbtFeelingString:
+        type: regex
+        options:
+            regex: '[1-9]'
+    adaTidak:
+        type: keyword
+        options:
+            keywords:
+                ada:
+                    - 'ya ada'
+                    - ada
+                tidak:
+                    - tidak
+                    - nggak
+    cbtPersen:
+        type: regex
+        options:
+            regex: '[1-9]'
+    cbtHindar:
+        type: keyword
+        options:
+            keywords:
+                takut:
+                    - takut
+                    - cemas
+    cbtBagian:
+        type: keyword
+        options:
+            keywords:
+                pikiran:
+                    - otak
+                    - hati
+                    - pikiran
+    thanks:
+        type: keyword
+        options:
+            keywords:
+                thanks:
+                    - 'terima kasih'
+                    - 'thank you'
+                    - thanks
+                    - makasih
+                    - trims
+                    - terimakasih
+                    - thanyou
+                    - 'thank u'
+                    - thx
+                    - arigato
+                    - gracias
+    guide:
+        type: keyword
+        options:
+            keywords:
+                guide:
+                    - guide
+                    - '-h'
+                    - '-help'
+                    - panduan
+    sapaan:
+        type: keyword
+        options:
+            keywords:
+                halo:
+                    - hi
+                    - hai
+                    - hallo
+                    - halo
+                    - hello
+                    - hei
+                    - hey
+                    - hay
+                    - ey
+                    - ui
+                    - oi
+                    - heyo
+                    - ey
+                    - ei
+                    - woi
+    feelingsState:
+        type: keyword
+        options:
+            keywords:
+                negative:
+                    - sedih
+                    - cemas
+                    - nervous
+                    - takut
+                    - gemetar
+                    - 'tidak enak badan'
+                    - badmood
+                    - 'bad mood'
+                    - bad
+                    - 'ingin bunuh diri'
+                    - 'ingin mati'
+                    - 'ingin menghilang'
+                    - depresi
+                    - 'mati rasa'
+                    - emosional
+                    - marah
+                    - tersinggung
+                    - ':('
+                    - ':(('
+                    - TT_TT
+                    - ':''('
+                    - 'i want to die'
+                    - 'i want to kill myself'
+                    - 'pingin mati'
+                    - 'pengen mati'
+                    - 'pengen bunuh diri'
+                    - dendam
+                    - minder
+                    - kesal
+                positive:
+                    - baik
+                    - 'baik-baik saja'
+                    - baik-baik
+                    - bahagia
+                    - 'sedang tenang'
+                    - 'lagi tenang'
+                    - 'I''m okay'
+                    - 'i''m fine'
+                    - gembira
+                    - sehat
+                    - bagus
+                    - sehat
+                    - damai
+    schTest:
+        type: keyword
+        options:
+            keywords:
+                next:
+                    - next
+    cancel:
+        type: keyword
+        options:
+            keywords:
+                cancel:
+                    - cancel
+            exact: true
+    affirmation:
+        type: keyword
+        options:
+            keywords:
+                affirmative:
+                    - okay
+                    - ok
+                    - roger
+            default: ""
+    curhat:
+        type: keyword
+        options:
+            keywords:
+                subjek:
+                    - aku
+                    - saya
+                    - ane
+                    - 'I am'
+                    - I
+                    - gua
+                    - gue
+                    - gw
+                    - dia
+                    - kami
+                    - kamu
+                    - mereka
+                    - itu
+                    - ini
+                    - she
+                    - he
+                    - they
+                    - their
+                    - them
+                    - him
+                    - her
+                bankKataCurhat:
+                    - mempengaruhi
+                    - menyebabkan
+                    - jadi
+                    - begitu
+                    - mungkin
+                    - karena
+                    - 'maka dari itu'
+                    - jadinya
+                    - menurutku
+                    - bisa
+                    - adalah
+                    - disebabkan
+                    - punya
+                    - bagaimana
+                    - ngefek
+                    - ke
+                    - di
+                    - menuju
+methods: {}
+config: {}
